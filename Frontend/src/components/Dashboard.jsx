@@ -1,57 +1,53 @@
-import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { clearUser } from '../redux/userSlice';
-import TelegramConnect from './TelegramConnect'; // Assume this exists in components
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
-const Dashboard = () => {
-  const { did } = useSelector((state) => state.user);
-  const [score, setScore] = useState(null);
+function Dashboard() {
+  const [scoreData, setScoreData] = useState(null);
   const [loading, setLoading] = useState(false);
-  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const token = localStorage.getItem('veridaToken');
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
   useEffect(() => {
-    const fetchScore = async () => {
-      if (did) {
-        setLoading(true);
-        try {
-          const response = await fetch(`/api/telegram/score/${did}`, {
-            headers: { 'Content-Type': 'application/json' },
-          });
-          const data = await response.json();
-          setScore(data);
-        } catch (error) {
-          console.error('Error fetching score:', error);
-        }
-        setLoading(false);
-      }
-    };
+    if (!token) navigate('/');
     fetchScore();
-  }, [did]);
+  }, [navigate, token]);
 
-  const handleLogout = () => {
-    dispatch(clearUser());
-    localStorage.removeItem('userDID');
+  const fetchScore = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API_BASE_URL}/api/score`, { token });
+      setScoreData(res.data);
+    } catch (error) {
+      console.error(error);
+      setScoreData({ error: 'Failed to load score. Ensure Telegram data is synced.' });
+    }
+    setLoading(false);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('veridaToken');
+    navigate('/');
   };
 
   return (
-    <div>
-      <h2>Dashboard</h2>
-      {!did && <p>Please log in with Verida Wallet.</p>}
-      {did && (
-        <div>
-          {loading && <p>Loading score...</p>}
-          {score && (
-            <div>
-              <p>FOMO Score: {score.score}</p>
-              <p>Title: {score.title}</p>
-            </div>
-          )}
-          <button onClick={handleLogout}>Logout</button>
-          <TelegramConnect />
-        </div>
+    <div className="container">
+      <h1>Your FOMOscore</h1>
+      {loading ? (
+        <p>Loading...</p>
+      ) : scoreData?.score ? (
+        <>
+          <p className="score">{scoreData.score.toFixed(1)}</p>
+          <p>Groups: {scoreData.groups} | Messages: {scoreData.messages}</p>
+          <button className="button-3d" onClick={fetchScore}>Refresh</button>
+          <button className="button-3d" onClick={logout}>Logout</button>
+        </>
+      ) : (
+        <p>{scoreData?.error || 'No data available'}</p>
       )}
     </div>
   );
-};
+}
 
 export default Dashboard;

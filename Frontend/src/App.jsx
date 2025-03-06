@@ -1,17 +1,26 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
+import { Routes, Route, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 
-const App = () => {
-  const { did } = useSelector((state) => state.user);
+function App() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    if (token) {
+      localStorage.setItem('veridaToken', token);
+      navigate('/dashboard');
+    }
+  }, [navigate]);
 
   return (
-    <div>
-      <h1>Telegram-Verida FOMOscore App</h1>
-      {did ? <Dashboard /> : <Login />}
-    </div>
+    <Routes>
+      <Route path="/" element={<Login />} />
+      <Route path="/dashboard" element={<Dashboard />} />
+    </Routes>
   );
-};
+}
 
 export default App;

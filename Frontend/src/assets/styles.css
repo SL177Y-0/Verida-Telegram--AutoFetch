@@ -1,0 +1,73 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+    background: #1a1a1a;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  
+  .container {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+  }
+  
+  p {
+    font-size: 1.2rem;
+    margin: 10px 0;
+  }
+  
+  .score {
+    font-size: 4rem;
+    font-weight: bold;
+    color: #00ffcc;
+  }
+  
+  /* 3D Button Styles */
+  .button-3d {
+    display: inline-block;
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    color: #fff;
+    background: #00ffcc;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 5px #00b38f, 0 10px 20px rgba(0, 0, 0, 0.3);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin: 10px;
+  }
+  
+  .button-3d:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px #00b38f, 0 12px 25px rgba(0, 0, 0, 0.4);
+  }
+  
+  .button-3d:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px #00b38f, 0 5px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Custom Verida Button Styling */
+  .button-3d img {
+    width: 200px;
+    height: auto;
+    transition: transform 0.2s ease;
+  }
+  
+  .button-3d:hover img {
+    transform: translateY(-2px);
+  }
+  
+  .button-3d:active img {
+    transform: translateY(4px);
+  }

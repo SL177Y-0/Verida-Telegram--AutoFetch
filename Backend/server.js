@@ -1,14 +1,13 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const telegramRoutes = require('./routes/telegramRoutes');
+const apiRoutes = require('./routes/api');
+require('dotenv').config();
 
 const app = express();
+const PORT = process.env.PORT || 5000;
+
 app.use(cors());
 app.use(express.json());
-app.use('/api', telegramRoutes);
+app.use('/api', apiRoutes);
 
-const scoreRoutes = require('./routes/scoreRoutes');
-app.use('/api/telegram', scoreRoutes);
-
-app.listen(process.env.PORT, () => console.log(`Server running on port ${process.env.PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
