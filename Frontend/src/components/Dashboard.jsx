@@ -1,53 +1,120 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
-function Dashboard() {
-  const [scoreData, setScoreData] = useState(null);
-  const [loading, setLoading] = useState(false);
+function Dashboard({ user }) {
+  const [fomoData, setFomoData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
-  const token = localStorage.getItem('veridaToken');
-  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
+  // Fetch FOMOscore on component mount
   useEffect(() => {
-    if (!token) navigate('/');
-    fetchScore();
-  }, [navigate, token]);
+    const fetchFOMOscore = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.post(
+          `${import.meta.env.VITE_API_BASE_URL}/api/score`,
+          {
+            did: user.did,
+            authToken: user.authToken
+          }
+        );
+        
+        setFomoData(response.data);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching FOMOscore:', err);
+        setError('Failed to fetch your FOMOscore. Please try again.');
+        setLoading(false);
+      }
+    };
 
-  const fetchScore = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.post(`${API_BASE_URL}/api/score`, { token });
-      setScoreData(res.data);
-    } catch (error) {
-      console.error(error);
-      setScoreData({ error: 'Failed to load score. Ensure Telegram data is synced.' });
+    if (user) {
+      fetchFOMOscore();
     }
-    setLoading(false);
+  }, [user]);
+
+  // Log out user
+  const handleLogout = () => {
+    // Clear user data and redirect to login
+    navigate('/');
+    window.location.reload();
   };
 
-  const logout = () => {
-    localStorage.removeItem('veridaToken');
-    navigate('/');
+  // Get score category based on FOMOscore value
+  const getScoreCategory = (score) => {
+    if (score < 10) return { category: 'Low FOMO', description: 'You\'re quite content with missing out. Kudos!' };
+    if (score < 50) return { category: 'Moderate FOMO', description: 'You\'re occasionally worried about missing the action.' };
+    if (score < 100) return { category: 'High FOMO', description: 'You\'re often concerned about missing important events.' };
+    return { category: 'Extreme FOMO', description: 'You can\'t stand the thought of missing anything!' };
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="dashboard-container">
+        <div className="dashboard-card loading">
+          <h2>Calculating your FOMOscore...</h2>
+          <div className="spinner"></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="dashboard-container">
+        <div className="dashboard-card error">
+          <h2>Oops! Something went wrong</h2>
+          <p>{error}</p>
+          <button className="button" onClick={handleLogout}>Try Again</button>
+        </div>
+      </div>
+    );
+  }
+
+  // Success state
+  const scoreInfo = fomoData ? getScoreCategory(fomoData.score) : null;
 
   return (
-    <div className="container">
-      <h1>Your FOMOscore</h1>
-      {loading ? (
-        <p>Loading...</p>
-      ) : scoreData?.score ? (
-        <>
-          <p className="score">{scoreData.score.toFixed(1)}</p>
-          <p>Groups: {scoreData.groups} | Messages: {scoreData.messages}</p>
-          <button className="button-3d" onClick={fetchScore}>Refresh</button>
-          <button className="button-3d" onClick={logout}>Logout</button>
-        </>
-      ) : (
-        <p>{scoreData?.error || 'No data available'}</p>
-      )}
+    <div className="dashboard-container">
+      <div className="dashboard-card">
+        <h1 className="title">Your FOMOscore</h1>
+        
+        {fomoData && (
+          <div className="score-container">
+            <div className="score-circle">
+              <span className="score-value">{fomoData.score}</span>
+            </div>
+            <h2 className="score-category">{scoreInfo.category}</h2>
+            <p className="score-description">{scoreInfo.description}</p>
+            
+            <div className="stats-container">
+              <div className="stat-item">
+                <span className="stat-label">Telegram Groups</span>
+                <span className="stat-value">{fomoData.data.groups}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Telegram Messages</span>
+                <span className="stat-value">{fomoData.data.messages}</span>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        <button className="button" onClick={handleLogout}>Log Out</button>
+      </div>
     </div>
   );
 }
+Dashboard.propTypes = {
+  user: PropTypes.shape({
+    did: PropTypes.string.isRequired,
+    authToken: PropTypes.string.isRequired
+  }).isRequired
+};
 
 export default Dashboard;
