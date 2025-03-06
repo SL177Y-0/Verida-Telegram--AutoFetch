@@ -22,7 +22,7 @@ function Login({ setUser }) {
   const connectWithVerida = () => {
     // Use the exact URL from your project documentation with just the redirectUrl modified
     const redirectUrl = encodeURIComponent(window.location.origin);
-    const authUrl = `https://app.verida.ai/auth?scopes=api%3Ads-query&scopes=ds%3Asocial-email&scopes=ds%3Ar%3Asocial-chat-group&scopes=ds%3Ar%3Asocial-chat-message&redirectUrl=https%3A%2F%2Fadmin.verida.ai%2Fsandbox%2Ftoken-generated&appDID=did%3Avda%3Amainnet%3A0x252ED26AbF3CfC4C962E46d02D7F999497029276`;
+    const authUrl = `https://app.verida.ai/auth?scopes=api%3Ads-query&scopes=ds%3Asocial-email&scopes=ds%3Ar%3Asocial-chat-group&scopes=ds%3Ar%3Asocial-chat-message&redirectUrl=https%3A%2F%2Fadmin.verida.ai%2Fsandbox%2Ftoken-generated&appDID=did%3Avda%3Amainnet%3A0x252ED26AbF3CfC4C962E46d02D7F999497029276&state=${redirectUrl}`;
     
     window.location.href = authUrl;
   };
