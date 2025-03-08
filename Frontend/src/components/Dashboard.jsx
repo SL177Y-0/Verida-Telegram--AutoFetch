@@ -18,9 +18,16 @@ function Dashboard({ user }) {
         // Log authentication information for debugging
         console.log('User authentication data:', {
           did: user.did,
-          authToken: user.authToken,
+          authToken: user.authToken?.substring(0, 10) + '...',
           hasTokenData: !!user.tokenData
         });
+        
+        // We now rely on the auth token to get the DID if needed
+        if (!user.authToken) {
+          setError('Missing Verida authentication token. Please try reconnecting with Verida.');
+          setLoading(false);
+          return;
+        }
         
         const response = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/api/score`,
@@ -30,12 +37,23 @@ function Dashboard({ user }) {
           }
         );
         
+        // Update the user DID if it was retrieved on the server side
+        if (response.data.did && (!user.did || user.did === 'unknown')) {
+          console.log(`Server retrieved DID: ${response.data.did}`);
+        }
+        
         console.log('Received FOMO score data:', response.data);
         setFomoData(response.data);
-        setLoading(false);
       } catch (err) {
         console.error('Error fetching FOMOscore:', err);
-        setError('Failed to fetch your FOMOscore. Please try again.');
+        
+        // Handle specific error cases
+        if (err.response?.data?.error === 'Invalid DID') {
+          setError('Invalid Verida DID. Please try reconnecting with Verida.');
+        } else {
+          setError(err.response?.data?.message || 'Failed to calculate your FOMOscore. Please try again.');
+        }
+      } finally {
         setLoading(false);
       }
     };
@@ -77,12 +95,26 @@ function Dashboard({ user }) {
 
   // Error state
   if (error) {
+    // Check if the error is related to DID
+    const isDIDError = error.includes('DID') || error.includes('Verida');
+    
     return (
       <div className="dashboard-container">
         <div className="dashboard-card error">
           <h2>Oops! Something went wrong</h2>
           <p>{error}</p>
-          <button className="button" onClick={handleLogout}>Try Again</button>
+          
+          {isDIDError ? (
+            <>
+              <p className="error-help">
+                This error is likely because we couldn't retrieve your Verida identity. 
+                Make sure you have a Verida account and have granted the necessary permissions.
+              </p>
+              <button className="button primary" onClick={handleLogout}>Reconnect with Verida</button>
+            </>
+          ) : (
+            <button className="button" onClick={handleLogout}>Try Again</button>
+          )}
         </div>
       </div>
     );

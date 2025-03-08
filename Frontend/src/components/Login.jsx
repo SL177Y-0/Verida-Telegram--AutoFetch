@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
 function Login({ setUser }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [error, setError] = useState(null);
 
   // Parse URL parameters after Verida authentication
   useEffect(() => {
@@ -12,6 +13,15 @@ function Login({ setUser }) {
     const did = searchParams.get('did');
     const authToken = searchParams.get('authToken');
     const tokenParam = searchParams.get('token');
+    const errorParam = searchParams.get('error');
+    const errorMessage = searchParams.get('message');
+    
+    // Check for error state
+    if (errorParam) {
+      console.error('Authentication error:', errorParam, errorMessage);
+      setError(errorMessage || 'Failed to authenticate with Verida. Please try again.');
+      return;
+    }
     
     // Try to parse token if available
     if (tokenParam) {
@@ -43,7 +53,8 @@ function Login({ setUser }) {
     const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
     const callbackUrl = `${backendUrl}/auth/callback`;
     
-    // Use the comprehensive Verida authentication URL with all required scopes and our callback
+    // Use the auth URL format from the sandbox example
+    // https://app.verida.ai/auth?scopes=...&redirectUrl=...&appDID=...
     const authUrl = `https://app.verida.ai/auth?scopes=api%3Ads-query&scopes=api%3Asearch-universal&scopes=ds%3Asocial-email&scopes=api%3Asearch-ds&scopes=api%3Asearch-chat-threads&scopes=ds%3Ar%3Asocial-chat-group&scopes=ds%3Ar%3Asocial-chat-message&redirectUrl=${encodeURIComponent(callbackUrl)}&appDID=did%3Avda%3Amainnet%3A0x87AE6A302aBf187298FC1Fa02A48cFD9EAd2818D`;
     
     console.log('Redirecting to Verida auth:', authUrl);
@@ -61,6 +72,7 @@ function Login({ setUser }) {
         <p className="note">
           Note: You must sync your Telegram data in your Verida Vault before using this app.
         </p>
+        {error && <p className="error">{error}</p>}
       </div>
     </div>
   );
