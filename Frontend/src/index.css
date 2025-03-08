@@ -100,9 +100,62 @@ body {
   margin-top: 1.5rem;
 }
 
+/* Manual Token Entry */
+.manual-token-section {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius);
+  text-align: left;
+}
+
+.manual-token-section h3 {
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.manual-token-section p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.token-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--primary-color);
+  border-radius: var(--border-radius);
+  padding: 0.75rem;
+  color: var(--text-color);
+  font-family: monospace;
+  font-size: 0.8rem;
+  resize: vertical;
+}
+
 /* Dashboard */
 .score-container {
   margin: 2rem 0;
+}
+
+/* User Info */
+.user-info {
+  background-color: rgba(93, 95, 239, 0.1);
+  border-radius: var(--border-radius);
+  padding: 12px;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+.did-info {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.did-value {
+  color: var(--primary-color);
+  font-family: monospace;
+  font-weight: 500;
 }
 
 .score-circle {

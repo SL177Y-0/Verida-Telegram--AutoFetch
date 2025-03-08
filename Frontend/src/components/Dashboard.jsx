@@ -14,6 +14,14 @@ function Dashboard({ user }) {
     const fetchFOMOscore = async () => {
       try {
         setLoading(true);
+        
+        // Log authentication information for debugging
+        console.log('User authentication data:', {
+          did: user.did,
+          authToken: user.authToken,
+          hasTokenData: !!user.tokenData
+        });
+        
         const response = await axios.post(
           `${import.meta.env.VITE_API_BASE_URL}/api/score`,
           {
@@ -22,6 +30,7 @@ function Dashboard({ user }) {
           }
         );
         
+        console.log('Received FOMO score data:', response.data);
         setFomoData(response.data);
         setLoading(false);
       } catch (err) {
@@ -31,8 +40,11 @@ function Dashboard({ user }) {
       }
     };
 
-    if (user) {
+    if (user && user.did && user.authToken) {
       fetchFOMOscore();
+    } else {
+      setError('Missing authentication information. Please log in again.');
+      setLoading(false);
     }
   }, [user]);
 
@@ -83,6 +95,10 @@ function Dashboard({ user }) {
     <div className="dashboard-container">
       <div className="dashboard-card">
         <h1 className="title">Your FOMOscore</h1>
+        
+        <div className="user-info">
+          <p className="did-info">Verida DID: <span className="did-value">{user.did}</span></p>
+        </div>
         
         {fomoData && (
           <div className="score-container">

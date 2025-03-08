@@ -11,19 +11,42 @@ function Login({ setUser }) {
     const searchParams = new URLSearchParams(location.search);
     const did = searchParams.get('did');
     const authToken = searchParams.get('authToken');
+    const tokenParam = searchParams.get('token');
     
-    // If Verida authentication successful, set user and redirect to dashboard
+    // Try to parse token if available
+    if (tokenParam) {
+      try {
+        const tokenData = JSON.parse(tokenParam);
+        console.log('Authentication successful from token data:', tokenData);
+        setUser({ 
+          did: tokenData.token.did, 
+          authToken: tokenData.token._id,
+          tokenData: tokenData.token
+        });
+        navigate('/dashboard');
+        return;
+      } catch (err) {
+        console.error('Error parsing token data:', err);
+      }
+    }
+    
+    // If Verida authentication successful from URL params
     if (did && authToken) {
+      console.log('Authentication successful from URL params:', { did, authToken });
       setUser({ did, authToken });
       navigate('/dashboard');
     }
   }, [location, setUser, navigate]);
 
   const connectWithVerida = () => {
-    // Use the exact URL from your project documentation with just the redirectUrl modified
-    const redirectUrl = encodeURIComponent(window.location.origin);
-    const authUrl = `https://app.verida.ai/auth?scopes=api%3Ads-query&scopes=api%3Allm-agent-prompt&scopes=api%3Asearch-universal&scopes=ds%3Asocial-email&scopes=api%3Asearch-chat-threads&scopes=api%3Asearch-ds&scopes=api%3Allm-profile-prompt&scopes=ds%3Ar%3Asocial-chat-message&scopes=ds%3Ar%3Asocial-chat-group&redirectUrl=https%3A%2F%2Fadmin.verida.ai%2Fsandbox%2Ftoken-generated&appDID=did%3Avda%3Amainnet%3A0x87AE6A302aBf187298FC1Fa02A48cFD9EAd2818D`;
+    // Set the redirect URL to our backend callback endpoint
+    const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+    const callbackUrl = `${backendUrl}/auth/callback`;
     
+    // Use the comprehensive Verida authentication URL with all required scopes and our callback
+    const authUrl = `https://app.verida.ai/auth?scopes=api%3Ads-query&scopes=api%3Asearch-universal&scopes=ds%3Asocial-email&scopes=api%3Asearch-ds&scopes=api%3Asearch-chat-threads&scopes=ds%3Ar%3Asocial-chat-group&scopes=ds%3Ar%3Asocial-chat-message&redirectUrl=${encodeURIComponent(callbackUrl)}&appDID=did%3Avda%3Amainnet%3A0x87AE6A302aBf187298FC1Fa02A48cFD9EAd2818D`;
+    
+    console.log('Redirecting to Verida auth:', authUrl);
     window.location.href = authUrl;
   };
 
@@ -42,6 +65,7 @@ function Login({ setUser }) {
     </div>
   );
 }
+
 Login.propTypes = {
   setUser: PropTypes.func.isRequired,
 };

@@ -11,19 +11,29 @@ router.post('/score', async (req, res) => {
       return res.status(400).json({ error: 'DID and auth token are required' });
     }
 
+    console.log('Received score request for DID:', did);
+    
     // Get Telegram data from Verida vault
     const telegramData = await veridaService.getTelegramData(did, authToken);
     
     // Calculate FOMOscore
     const fomoScore = calculateFOMOscore(telegramData);
+    console.log('Calculated FOMO score:', fomoScore);
     
     return res.json({ 
       score: fomoScore,
-      data: telegramData
+      data: {
+        groups: telegramData.groups,
+        messages: telegramData.messages
+      }
     });
   } catch (error) {
     console.error('Error calculating FOMOscore:', error);
-    return res.status(500).json({ error: 'Failed to calculate FOMOscore' });
+    return res.status(500).json({ 
+      error: 'Failed to calculate FOMOscore', 
+      message: error.message || 'Unknown error',
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
