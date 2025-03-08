@@ -28,20 +28,28 @@ router.post('/score', async (req, res) => {
     console.log('Received score request for DID:', userDid);
     
     // Get Telegram data from Verida vault
-    const telegramData = await veridaService.getTelegramData(userDid, authToken);
-    
-    // Calculate FOMOscore
-    const fomoScore = calculateFOMOscore(telegramData);
-    console.log('Calculated FOMO score:', fomoScore);
-    
-    return res.json({ 
-      score: fomoScore,
-      did: userDid,
-      data: {
-        groups: telegramData.groups,
-        messages: telegramData.messages
-      }
-    });
+    try {
+      const telegramData = await veridaService.getTelegramData(userDid, authToken);
+      
+      // Calculate FOMOscore
+      const fomoScore = calculateFOMOscore(telegramData);
+      console.log('Calculated FOMO score:', fomoScore);
+      
+      return res.json({ 
+        score: fomoScore,
+        did: userDid,
+        data: {
+          groups: telegramData.groups,
+          messages: telegramData.messages
+        }
+      });
+    } catch (veridaError) {
+      console.error('Error getting Telegram data:', veridaError);
+      return res.status(500).json({
+        error: 'Failed to fetch Telegram data',
+        message: veridaError.message || 'Could not retrieve your Telegram data from Verida'
+      });
+    }
   } catch (error) {
     console.error('Error calculating FOMOscore:', error);
     return res.status(500).json({ 
@@ -52,11 +60,19 @@ router.post('/score', async (req, res) => {
   }
 });
 
-// Helper function to calculate FOMOscore
+// Helper function to calculate FOMOscore (scaled 1-10)
 function calculateFOMOscore(data) {
   const { groups, messages } = data;
-  // Simple formula: groups * 1 + messages * 0.1
-  return Math.round((groups * 1 + messages * 0.1) * 10) / 10;
+  
+  // Base calculation - raw activity score
+  const rawScore = groups + messages * 0.1;
+  
+  // Scale to 1-10 range using logarithmic scale
+  // This handles wide ranges of activity more gracefully
+  const scaledScore = 1 + 9 * Math.min(1, Math.log10(rawScore + 1) / Math.log10(101));
+  
+  // Round to 1 decimal place
+  return Math.max(1, Math.min(10, Math.round(scaledScore * 10) / 10));
 }
 
 module.exports = router;

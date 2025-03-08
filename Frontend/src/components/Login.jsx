@@ -22,29 +22,47 @@ function Login({ setUser }) {
       setError(errorMessage || 'Failed to authenticate with Verida. Please try again.');
       return;
     }
+
+    // First check for direct params from our backend
+    if (did && authToken) {
+      console.log('Authentication successful from URL params:', { did, authToken: authToken.substring(0, 10) + '...' });
+      setUser({ did, authToken });
+      navigate('/dashboard');
+      return;
+    }
     
-    // Try to parse token if available
+    // Try to parse token if available (direct from Verida)
     if (tokenParam) {
       try {
         const tokenData = JSON.parse(tokenParam);
         console.log('Authentication successful from token data:', tokenData);
-        setUser({ 
-          did: tokenData.token.did, 
-          authToken: tokenData.token._id,
-          tokenData: tokenData.token
-        });
-        navigate('/dashboard');
-        return;
+        
+        // Extract DID and token based on Verida's structure
+        let extractedDid, extractedToken;
+        
+        if (tokenData.token) {
+          extractedDid = tokenData.token.did;
+          extractedToken = tokenData.token._id || tokenData.token;
+        } else if (tokenData.did) {
+          extractedDid = tokenData.did;
+          extractedToken = tokenData._id;
+        }
+        
+        if (extractedDid && extractedToken) {
+          setUser({ 
+            did: extractedDid, 
+            authToken: extractedToken,
+            tokenData: tokenData
+          });
+          navigate('/dashboard');
+          return;
+        } else {
+          setError('Incomplete authentication data received. Please try again.');
+        }
       } catch (err) {
         console.error('Error parsing token data:', err);
+        setError('Failed to process authentication data. Please try again.');
       }
-    }
-    
-    // If Verida authentication successful from URL params
-    if (did && authToken) {
-      console.log('Authentication successful from URL params:', { did, authToken });
-      setUser({ did, authToken });
-      navigate('/dashboard');
     }
   }, [location, setUser, navigate]);
 
@@ -54,7 +72,6 @@ function Login({ setUser }) {
     const callbackUrl = `${backendUrl}/auth/callback`;
     
     // Use the auth URL format from the sandbox example
-    // https://app.verida.ai/auth?scopes=...&redirectUrl=...&appDID=...
     const authUrl = `https://app.verida.ai/auth?scopes=api%3Ads-query&scopes=api%3Asearch-universal&scopes=ds%3Asocial-email&scopes=api%3Asearch-ds&scopes=api%3Asearch-chat-threads&scopes=ds%3Ar%3Asocial-chat-group&scopes=ds%3Ar%3Asocial-chat-message&redirectUrl=${encodeURIComponent(callbackUrl)}&appDID=did%3Avda%3Amainnet%3A0x87AE6A302aBf187298FC1Fa02A48cFD9EAd2818D`;
     
     console.log('Redirecting to Verida auth:', authUrl);

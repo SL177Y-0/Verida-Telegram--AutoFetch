@@ -75,9 +75,9 @@ function Dashboard({ user }) {
 
   // Get score category based on FOMOscore value
   const getScoreCategory = (score) => {
-    if (score < 10) return { category: 'Low FOMO', description: 'You\'re quite content with missing out. Kudos!' };
-    if (score < 50) return { category: 'Moderate FOMO', description: 'You\'re occasionally worried about missing the action.' };
-    if (score < 100) return { category: 'High FOMO', description: 'You\'re often concerned about missing important events.' };
+    if (score < 3) return { category: 'Low FOMO', description: 'You\'re quite content with missing out. Kudos!' };
+    if (score < 6) return { category: 'Moderate FOMO', description: 'You\'re occasionally worried about missing the action.' };
+    if (score < 8) return { category: 'High FOMO', description: 'You\'re often concerned about missing important events.' };
     return { category: 'Extreme FOMO', description: 'You can\'t stand the thought of missing anything!' };
   };
 
@@ -134,8 +134,20 @@ function Dashboard({ user }) {
         
         {fomoData && (
           <div className="score-container">
+            {/* Add warning if no Telegram data found */}
+            {fomoData.data.groups === 0 && fomoData.data.messages === 0 && (
+              <div className="no-data-warning">
+                <p>No Telegram data found in your Verida vault.</p>
+                <p>Please sync your Telegram with Verida first by installing the Verida Wallet app.</p>
+                <a href="https://www.verida.io/wallet" target="_blank" rel="noopener noreferrer" className="button secondary">
+                  Get Verida Wallet
+                </a>
+              </div>
+            )}
+            
             <div className="score-circle">
               <span className="score-value">{fomoData.score}</span>
+              <span className="score-scale">/10</span>
             </div>
             <h2 className="score-category">{scoreInfo.category}</h2>
             <p className="score-description">{scoreInfo.description}</p>
