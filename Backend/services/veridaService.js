@@ -15,6 +15,49 @@ console.log(`Using Verida API endpoint: ${VERIDA_API_BASE_URL}`);
 const GROUP_SCHEMA_ENCODED = 'aHR0cHM6Ly9jb21tb24uc2NoZW1hcy52ZXJpZGEuaW8vc29jaWFsL2NoYXQvZ3JvdXAvdjAuMS4wL3NjaGVtYS5qc29u';
 const MESSAGE_SCHEMA_ENCODED = 'aHR0cHM6Ly9jb21tb24uc2NoZW1hcy52ZXJpZGEuaW8vc29jaWFsL2NoYXQvbWVzc2FnZS92MC4xLjAvc2NoZW1hLmpzb24%3D';
 
+// Keywords to check for "Engage Bonus"
+const ENGAGE_KEYWORDS = ['cluster', 'protocol', 'ai'];
+
+// Helper function to check for keywords in text content
+function checkForKeywords(text, keywordMatches) {
+  if (!text) return;
+  
+  const normalizedText = text.toLowerCase();
+  
+  ENGAGE_KEYWORDS.forEach(keyword => {
+    // Match whole words, case insensitive, including:
+    // - Within sentences
+    // - In capital letters
+    // - In hashtags (#keyword)
+    // - Multiple keywords in same text
+    
+    let searchPos = 0;
+    const lowerKeyword = keyword.toLowerCase();
+    
+    while (true) {
+      const foundPos = normalizedText.indexOf(lowerKeyword, searchPos);
+      if (foundPos === -1) break;
+      
+      // Check if it's a whole word or hashtag match
+      const isWordStart = foundPos === 0 || 
+        !normalizedText[foundPos-1].match(/[a-z0-9]/) || 
+        normalizedText[foundPos-1] === '#';
+        
+      const isWordEnd = foundPos + lowerKeyword.length >= normalizedText.length || 
+        !normalizedText[foundPos + lowerKeyword.length].match(/[a-z0-9]/);
+      
+      if (isWordStart && isWordEnd) {
+        keywordMatches.keywords[keyword]++;
+        keywordMatches.totalCount++;
+        console.log(`Keyword match: '${keyword}' at position ${foundPos} in text: "${text.substring(Math.max(0, foundPos-10), Math.min(text.length, foundPos+keyword.length+10))}..."`);
+        break; // Count each keyword only once per text
+      }
+      
+      searchPos = foundPos + 1;
+    }
+  });
+}
+
 // Verida service for querying vault data
 const veridaService = {
   // Get user DID using the auth token
@@ -117,6 +160,17 @@ const veridaService = {
       // First try direct count API
       let groups = 0;
       let messages = 0;
+      let groupItems = [];
+      let messageItems = [];
+      let keywordMatches = {
+        totalCount: 0,
+        keywords: {}
+      };
+      
+      // Initialize keyword counts
+      ENGAGE_KEYWORDS.forEach(keyword => {
+        keywordMatches.keywords[keyword] = 0;
+      });
       
       console.log('Trying direct count API...');
       try {
@@ -152,60 +206,6 @@ const veridaService = {
         // Fall back to query API
         console.log('Trying direct query API...');
         try {
-          // Use pagination to get all groups and messages
-          async function fetchAllItems(schemaEncoded) {
-            let allItems = [];
-            let hasMore = true;
-            let skip = 0;
-            const limit = 100;
-            
-            while (hasMore) {
-              const response = await axios({
-                method: 'POST',
-                url: `${VERIDA_API_BASE_URL}/api/rest/v1/ds/query/${schemaEncoded}`,
-                data: {
-                  options: {
-                    sort: [{ _id: "desc" }],
-                    limit: limit,
-                    skip: skip
-                  }
-                },
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': authHeader
-                },
-                timeout: 15000
-              });
-              
-              // Check response format - Verida may return items in different places
-              let items = [];
-              if (response.data?.results && Array.isArray(response.data.results)) {
-                items = response.data.results;
-              } else if (response.data?.items && Array.isArray(response.data.items)) {
-                items = response.data.items;
-              }
-              
-              if (items.length === 0) {
-                console.log(`No items found for this schema (${schemaEncoded.substring(0, 10)}...)`);
-                
-                // Log response structure for debugging
-                console.log('Response keys:', Object.keys(response.data || {}));
-                hasMore = false;
-              } else {
-                allItems = allItems.concat(items);
-                console.log(`Fetched ${items.length} items, total: ${allItems.length}`);
-                
-                if (items.length < limit) {
-                  hasMore = false;
-                } else {
-                  skip += limit;
-                }
-              }
-            }
-            
-            return allItems;
-          }
-          
           // Fetch group data
           const groupResponse = await axios({
             method: 'POST',
@@ -255,9 +255,6 @@ const veridaService = {
           );
           
           // Extract data based on response format
-          let groupItems = [];
-          let messageItems = [];
-          
           if (groupResponse.data?.results && Array.isArray(groupResponse.data.results)) {
             groupItems = groupResponse.data.results;
           } else if (groupResponse.data?.items && Array.isArray(groupResponse.data.items)) {
@@ -275,60 +272,140 @@ const veridaService = {
           groups = groupItems.length;
           messages = messageItems.length;
           
-          // If we're hitting the limit, use pagination to get total counts
-          if (groups === 100 || messages === 100) {
-            console.log('Detected limit reached, using pagination to get full counts');
-            // For now, we'll use the limited counts to avoid overloading the API
-            // Uncomment these lines to get full counts
-            // const allGroups = await fetchAllItems(GROUP_SCHEMA_ENCODED);
-            // const allMessages = await fetchAllItems(MESSAGE_SCHEMA_ENCODED);
-            // groups = allGroups.length;
-            // messages = allMessages.length;
+          // Check for keywords in group content
+          if (groupItems.length > 0) {
+            console.log('Checking group content for keywords...');
+            groupItems.forEach(group => {
+              const groupText = [
+                group.name || '', 
+                group.description || '',
+                group.subject || ''
+              ].join(' ');
+              
+              if (groupText.trim()) {
+                checkForKeywords(groupText, keywordMatches);
+              }
+            });
+          }
+          
+ // Enhanced message content checking
+if (messageItems.length > 0) {
+  console.log('Checking message content for keywords...');
+  messageItems.forEach(message => {
+    // Log the entire message object structure to debug
+    console.log('Message object keys:', Object.keys(message));
+    
+    // Try to get message content from any possible field
+    let allTextFields = [];
+    
+    // Add all string fields from the message object
+    Object.entries(message).forEach(([key, value]) => {
+      if (typeof value === 'string') {
+        allTextFields.push(value);
+      } else if (typeof value === 'object' && value !== null) {
+        // Check nested objects (like "body" or "data")
+        Object.values(value).forEach(nestedValue => {
+          if (typeof nestedValue === 'string') {
+            allTextFields.push(nestedValue);
+          }
+        });
+      }
+    });
+    
+    const messageText = allTextFields.join(' ');
+    
+    if (messageText.trim()) {
+      checkForKeywords(messageText, keywordMatches);
+    }
+  });
+}
+          
+          console.log(`Found ${keywordMatches.totalCount} total keyword matches`);
+          for (const [keyword, count] of Object.entries(keywordMatches.keywords)) {
+            if (count > 0) {
+              console.log(`- '${keyword}': ${count} matches`);
+            }
           }
         } catch (queryError) {
           console.error('Query API failed:', queryError.message);
           
-          // Last resort: try universal search
+          // Last resort: try universal search for each keyword
+          console.log('Trying keyword-specific searches...');
           try {
-            const searchResponse = await axios({
-              method: 'GET',
-              url: `${VERIDA_API_BASE_URL}/api/rest/v1/search/universal?keywords=telegram`,
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': authHeader
-              },
-              timeout: 10000
-            });
-            
-            if (searchResponse.data?.items && Array.isArray(searchResponse.data.items)) {
-              const telegramItems = searchResponse.data.items.filter(item => 
-                (item.schema?.includes('chat/group') || 
-                 item.schema?.includes('chat/message') || 
-                 (item.name && item.name.toLowerCase().includes('telegram')))
-              );
-              
-              console.log(`Found ${telegramItems.length} Telegram-related items in search`);
-              
-              // Set the counts based on the search results
-              groups = telegramItems.filter(item => 
-                item.schema?.includes('chat/group')
-              ).length;
-              
-              messages = telegramItems.filter(item => 
-                item.schema?.includes('chat/message')
-              ).length;
-              
-              console.log(`Search results: ${groups} groups, ${messages} messages`);
+            for (const keyword of ENGAGE_KEYWORDS) {
+              try {
+                const keywordResponse = await axios({
+                  method: 'GET',
+                  url: `${VERIDA_API_BASE_URL}/api/rest/v1/search/universal?keywords=${keyword}`,
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': authHeader
+                  },
+                  timeout: 10000
+                });
+                
+                if (keywordResponse.data?.items && Array.isArray(keywordResponse.data.items)) {
+                  const matchCount = keywordResponse.data.items.filter(item => 
+                    (item.schema?.includes('chat/group') || item.schema?.includes('chat/message'))
+                  ).length;
+                  
+                  keywordMatches.keywords[keyword] = matchCount;
+                  keywordMatches.totalCount += matchCount;
+                  
+                  console.log(`Search for '${keyword}' found ${matchCount} matches`);
+                }
+              } catch (keywordError) {
+                console.warn(`Search for keyword '${keyword}' failed:`, keywordError.message);
+              }
             }
           } catch (searchError) {
-            console.error('Search also failed:', searchError.message);
+            console.error('Keyword searches failed:', searchError.message);
+          }
+          
+          // If we still have no group/message counts, try universal search for telegram
+          if (groups === 0 && messages === 0) {
+            try {
+              const searchResponse = await axios({
+                method: 'GET',
+                url: `${VERIDA_API_BASE_URL}/api/rest/v1/search/universal?keywords=telegram`,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': authHeader
+                },
+                timeout: 10000
+              });
+              
+              if (searchResponse.data?.items && Array.isArray(searchResponse.data.items)) {
+                const telegramItems = searchResponse.data.items.filter(item => 
+                  (item.schema?.includes('chat/group') || 
+                   item.schema?.includes('chat/message') || 
+                   (item.name && item.name.toLowerCase().includes('telegram')))
+                );
+                
+                console.log(`Found ${telegramItems.length} Telegram-related items in search`);
+                
+                // Set the counts based on the search results
+                groups = telegramItems.filter(item => 
+                  item.schema?.includes('chat/group')
+                ).length;
+                
+                messages = telegramItems.filter(item => 
+                  item.schema?.includes('chat/message')
+                ).length;
+                
+                console.log(`Search results: ${groups} groups, ${messages} messages`);
+              }
+            } catch (searchError) {
+              console.error('Telegram search also failed:', searchError.message);
+            }
           }
         }
       }
       
       return {
         groups,
-        messages
+        messages,
+        keywordMatches
       };
     } catch (error) {
       console.error('Error querying Verida vault:', error.message || error);

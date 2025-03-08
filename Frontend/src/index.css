@@ -348,3 +348,93 @@ body {
   font-size: 3rem;
   font-weight: bold;
 }
+/* Add these styles to your index.css file */
+
+.engage-bonus {
+  background-color: rgba(93, 95, 239, 0.08);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  margin: 20px 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.engage-bonus::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+}
+
+.engage-title {
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+  color: var(--primary-color);
+}
+
+.engage-description {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-bottom: 15px;
+}
+
+.keyword-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 15px 0;
+}
+
+.keyword-total {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.keyword-label {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: 5px;
+}
+
+.keyword-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.keyword-item {
+  display: flex;
+  align-items: center;
+  background-color: rgba(93, 95, 239, 0.1);
+  padding: 8px 12px;
+  border-radius: 20px;
+}
+
+.keyword-name {
+  font-size: 0.9rem;
+  margin-right: 8px;
+}
+
+.keyword-badge {
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* Move the button below the engage bonus section */
+.engage-bonus + .button {
+  margin-top: 15px;
+}

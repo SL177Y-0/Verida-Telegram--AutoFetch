@@ -75,10 +75,10 @@ function Dashboard({ user }) {
 
   // Get score category based on FOMOscore value
   const getScoreCategory = (score) => {
-    if (score < 3) return { category: 'Low FOMO', description: 'You\'re quite content with missing out. Kudos!' };
-    if (score < 6) return { category: 'Moderate FOMO', description: 'You\'re occasionally worried about missing the action.' };
-    if (score < 8) return { category: 'High FOMO', description: 'You\'re often concerned about missing important events.' };
-    return { category: 'Extreme FOMO', description: 'You can\'t stand the thought of missing anything!' };
+    if (score < 3) return { category: 'Noob', description: 'You\'re quite content with missing out. Kudos!' };
+    if (score < 6) return { category: 'Intern', description: 'You\'re occasionally worried about missing the action.' };
+    if (score < 8) return { category: 'Associate', description: 'You\'re often concerned about missing important events.' };
+    return { category: 'Pro', description: 'You can\'t stand the thought of missing anything!' };
   };
 
   // Loading state
@@ -122,6 +122,7 @@ function Dashboard({ user }) {
 
   // Success state
   const scoreInfo = fomoData ? getScoreCategory(fomoData.score) : null;
+  const hasKeywordMatches = fomoData?.data?.keywordMatches?.totalCount > 0;
 
   return (
     <div className="dashboard-container">
@@ -162,14 +163,39 @@ function Dashboard({ user }) {
                 <span className="stat-value">{fomoData.data.messages}</span>
               </div>
             </div>
+            
+            {/* Add Engage Bonus section */}
+            <div className="engage-bonus">
+              <h3 className="engage-title">Engage Bonus</h3>
+              <p className="engage-description">
+                How much you gossip about ?
+              </p>
+              
+              <div className="keyword-count">
+                <span className="keyword-total">{fomoData.data.keywordMatches?.totalCount || 0}</span>
+                <span className="keyword-label">Total Matches</span>
+              </div>
+              
+              {hasKeywordMatches && (
+                <div className="keyword-breakdown">
+                  {Object.entries(fomoData.data.keywordMatches.keywords).map(([keyword, count]) => (
+                    <div key={keyword} className="keyword-item">
+                      <span className="keyword-name">{keyword}</span>
+                      <span className="keyword-badge">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+        
+            <button className="button" onClick={handleLogout}>Log Out</button>
           </div>
         )}
-        
-        <button className="button" onClick={handleLogout}>Log Out</button>
       </div>
     </div>
   );
 }
+
 Dashboard.propTypes = {
   user: PropTypes.shape({
     did: PropTypes.string.isRequired,

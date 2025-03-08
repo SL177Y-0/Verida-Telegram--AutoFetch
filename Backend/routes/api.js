@@ -40,7 +40,8 @@ router.post('/score', async (req, res) => {
         did: userDid,
         data: {
           groups: telegramData.groups,
-          messages: telegramData.messages
+          messages: telegramData.messages,
+          keywordMatches: telegramData.keywordMatches
         }
       });
     } catch (veridaError) {
@@ -62,14 +63,20 @@ router.post('/score', async (req, res) => {
 
 // Helper function to calculate FOMOscore (scaled 1-10)
 function calculateFOMOscore(data) {
-  const { groups, messages } = data;
+  const { groups, messages, keywordMatches } = data;
+  
+  // Add engage bonus from keywords
+  const keywordBonus = keywordMatches ? keywordMatches.totalCount * 0.5 : 0;
   
   // Base calculation - raw activity score
-  const rawScore = groups + messages * 0.1;
+  const rawScore = groups + messages * 0.1 + keywordBonus;
   
   // Scale to 1-10 range using logarithmic scale
   // This handles wide ranges of activity more gracefully
   const scaledScore = 1 + 9 * Math.min(1, Math.log10(rawScore + 1) / Math.log10(101));
+  
+  // Log the calculation for debugging
+  console.log(`Score calculation: groups=${groups}, messages=${messages}, keywordBonus=${keywordBonus}, rawScore=${rawScore}, scaledScore=${scaledScore}`);
   
   // Round to 1 decimal place
   return Math.max(1, Math.min(10, Math.round(scaledScore * 10) / 10));
