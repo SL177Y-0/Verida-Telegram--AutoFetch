@@ -6,6 +6,8 @@ function Login({ setUser }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [error, setError] = useState(null);
+  const [manualDid, setManualDid] = useState('');
+  const [manualMode, setManualMode] = useState(false);
 
   // Parse URL parameters after Verida authentication
   useEffect(() => {
@@ -77,6 +79,22 @@ function Login({ setUser }) {
     console.log('Redirecting to Verida auth:', authUrl);
     window.location.href = authUrl;
   };
+  
+  const toggleManualMode = () => {
+    setManualMode(!manualMode);
+  };
+  
+  const handleManualLogin = () => {
+    if (manualDid) {
+      setUser({ 
+        did: manualDid,
+        authToken: 'manual-auth-token-for-testing'  // A placeholder token
+      });
+      navigate('/dashboard');
+    } else {
+      setError('Please enter a valid DID');
+    }
+  };
 
   return (
     <div className="login-container">
@@ -90,6 +108,47 @@ function Login({ setUser }) {
           Note: You must sync your Telegram data in your Verida Vault before using this app.
         </p>
         {error && <p className="error">{error}</p>}
+        
+        {/* Developer mode toggle */}
+        <div className="developer-toggle">
+          <button 
+            className="text-button" 
+            onClick={toggleManualMode}
+            style={{ 
+              background: 'none', 
+              border: 'none', 
+              textDecoration: 'underline', 
+              color: '#666',
+              fontSize: '0.8rem',
+              marginTop: '20px',
+              cursor: 'pointer'
+            }}
+          >
+            {manualMode ? 'Hide Developer Mode' : 'Developer Mode'}
+          </button>
+        </div>
+        
+        {/* Manual DID entry for developers */}
+        {manualMode && (
+          <div className="manual-token-section">
+            <h3>Manual DID Entry</h3>
+            <p>For testing purposes only:</p>
+            <input
+              type="text"
+              value={manualDid}
+              onChange={(e) => setManualDid(e.target.value)}
+              placeholder="Enter your Verida DID"
+              className="token-input"
+            />
+            <button 
+              className="button"
+              onClick={handleManualLogin}
+              style={{ marginTop: '10px' }}
+            >
+              Continue with Manual DID
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

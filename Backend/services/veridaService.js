@@ -18,6 +18,45 @@ const MESSAGE_SCHEMA_ENCODED = 'aHR0cHM6Ly9jb21tb24uc2NoZW1hcy52ZXJpZGEuaW8vc29j
 // Keywords to check for "Engage Bonus"
 const ENGAGE_KEYWORDS = ['cluster', 'protocol', 'ai'];
 
+// Helper function to test multiple Verida API endpoints
+async function testVeridaEndpoints(authToken) {
+  const endpoints = [
+    '/api/profile',
+    '/api/user/info',
+    '/v1/user',
+    '/user',
+    '/profile'
+  ];
+  
+  console.log('Testing Verida endpoints with token:', authToken.substring(0, 10) + '...');
+  
+  for (const endpoint of endpoints) {
+    try {
+      const response = await axios({
+        method: 'GET',
+        url: `${VERIDA_API_BASE_URL}${endpoint}`,
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        },
+        timeout: 5000
+      });
+      
+      console.log(`✅ Endpoint ${endpoint} succeeded:`, response.status);
+      console.log('Response data keys:', Object.keys(response.data || {}));
+      
+      if (response.data?.did) {
+        console.log('DID found in response:', response.data.did);
+        return response.data.did;
+      }
+    } catch (error) {
+      console.log(`❌ Endpoint ${endpoint} failed:`, error.message);
+      console.log('Status:', error.response?.status);
+    }
+  }
+  return null;
+}
+
 // Helper function to check for keywords in text content
 function checkForKeywords(text, keywordMatches) {
   if (!text) return;
@@ -91,7 +130,13 @@ const veridaService = {
       // Format auth header correctly
       const authHeader = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
       
-      // Try to get user profile info
+      // Try the new testing function for all endpoints
+      const didFromTests = await testVeridaEndpoints(authToken);
+      if (didFromTests) {
+        return didFromTests;
+      }
+      
+      // Try to get user profile info with the standard endpoint
       try {
         const profileResponse = await axios({
           method: 'GET',
@@ -109,6 +154,26 @@ const veridaService = {
         }
       } catch (profileError) {
         console.warn('Profile lookup failed:', profileError.message);
+      }
+
+      // Try a different API endpoint format
+      try {
+        const newEndpointResponse = await axios({
+          method: 'GET',
+          url: `${VERIDA_API_BASE_URL}/v1/user`,  // Try this endpoint instead
+          headers: {
+            'Authorization': authHeader,
+            'Content-Type': 'application/json'
+          },
+          timeout: 5000
+        });
+        
+        if (newEndpointResponse.data?.did) {
+          console.log('Retrieved DID from v1/user endpoint:', newEndpointResponse.data.did);
+          return newEndpointResponse.data.did;
+        }
+      } catch (newEndpointError) {
+        console.warn('v1/user endpoint lookup failed:', newEndpointError.message);
       }
 
       // Try to get user info through alternative endpoint
@@ -213,7 +278,7 @@ const veridaService = {
             data: {
               options: {
                 sort: [{ _id: "desc" }],
-                limit: 100
+                limit: 1000
               }
             },
             headers: {
@@ -230,7 +295,7 @@ const veridaService = {
             data: {
               options: {
                 sort: [{ _id: "desc" }],
-                limit: 100
+                limit: 1000
               }
             },
             headers: {
@@ -288,37 +353,37 @@ const veridaService = {
             });
           }
           
- // Enhanced message content checking
-if (messageItems.length > 0) {
-  console.log('Checking message content for keywords...');
-  messageItems.forEach(message => {
-    // Log the entire message object structure to debug
-    console.log('Message object keys:', Object.keys(message));
-    
-    // Try to get message content from any possible field
-    let allTextFields = [];
-    
-    // Add all string fields from the message object
-    Object.entries(message).forEach(([key, value]) => {
-      if (typeof value === 'string') {
-        allTextFields.push(value);
-      } else if (typeof value === 'object' && value !== null) {
-        // Check nested objects (like "body" or "data")
-        Object.values(value).forEach(nestedValue => {
-          if (typeof nestedValue === 'string') {
-            allTextFields.push(nestedValue);
+          // Enhanced message content checking
+          if (messageItems.length > 0) {
+            console.log('Checking message content for keywords...');
+            messageItems.forEach(message => {
+              // Log the entire message object structure to debug
+              console.log('Message object keys:', Object.keys(message));
+              
+              // Try to get message content from any possible field
+              let allTextFields = [];
+              
+              // Add all string fields from the message object
+              Object.entries(message).forEach(([key, value]) => {
+                if (typeof value === 'string') {
+                  allTextFields.push(value);
+                } else if (typeof value === 'object' && value !== null) {
+                  // Check nested objects (like "body" or "data")
+                  Object.values(value).forEach(nestedValue => {
+                    if (typeof nestedValue === 'string') {
+                      allTextFields.push(nestedValue);
+                    }
+                  });
+                }
+              });
+              
+              const messageText = allTextFields.join(' ');
+              
+              if (messageText.trim()) {
+                checkForKeywords(messageText, keywordMatches);
+              }
+            });
           }
-        });
-      }
-    });
-    
-    const messageText = allTextFields.join(' ');
-    
-    if (messageText.trim()) {
-      checkForKeywords(messageText, keywordMatches);
-    }
-  });
-}
           
           console.log(`Found ${keywordMatches.totalCount} total keyword matches`);
           for (const [keyword, count] of Object.entries(keywordMatches.keywords)) {

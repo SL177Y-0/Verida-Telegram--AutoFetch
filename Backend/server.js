@@ -58,15 +58,38 @@ app.get('/auth/callback', async (req, res) => {
     }
     
     // If we don't have an auth token yet, look for auth_token parameter
+    if (!authToken && req.query.auth_token) {
+      authToken = req.query.auth_token;
+      console.log('Using auth_token directly:', authToken);
+      
+      // Try to decode the token if needed
+      if (authToken.includes('-')) {
+        // This appears to be a UUID-style token, which is likely correct format
+        console.log('Token appears to be in UUID format');
+      } else {
+        // Try to see if it's base64 encoded or needs other processing
+        try {
+          const decoded = Buffer.from(authToken, 'base64').toString();
+          if (decoded !== authToken) {
+            console.log('Decoded token from base64:', decoded.substring(0, 10) + '...');
+            authToken = decoded;
+          }
+        } catch (e) {
+          // Not base64, keep original
+        }
+      }
+    }
+    
+    // If we still don't have an auth token, check request body
     if (!authToken) {
-      authToken = req.query.auth_token || req.body.auth_token;
-      console.log('Using auth_token from parameters:', authToken);
+      authToken = req.body.auth_token || req.body.token;
+      console.log('Using auth_token from request body:', authToken ? `${authToken.substring(0, 10)}...` : 'none');
     }
     
     // If we still don't have an auth token, redirect to Verida's authentication
     if (!authToken) {
       // If no token, redirect to Verida's token generator with our frontend as the callback
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
       const returnUrl = `${frontendUrl}?source=verida_callback`;
       
       console.log('No token found, redirecting to Verida token generator with return URL:', returnUrl);
@@ -84,7 +107,8 @@ app.get('/auth/callback', async (req, res) => {
         console.log('Successfully retrieved DID:', did);
       } catch (didError) {
         console.error('Error fetching DID:', didError.message);
-        // If we can't get the DID, use the default
+        // If we can't get the DID, still proceed with unknown DID
+        // The frontend will handle this case
         did = process.env.DEFAULT_DID || 'unknown';
         console.log('Using default or unknown DID:', did);
       }
@@ -93,7 +117,7 @@ app.get('/auth/callback', async (req, res) => {
     console.log('Final values - DID:', did, 'Auth Token:', authToken ? `${authToken.substring(0, 10)}...` : 'none');
     
     // Redirect to frontend with the token information
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
     const redirectUrl = `${frontendUrl}?did=${encodeURIComponent(did || 'unknown')}&authToken=${encodeURIComponent(authToken)}`;
     
     console.log('Redirecting to frontend with token data:', redirectUrl);
@@ -102,7 +126,7 @@ app.get('/auth/callback', async (req, res) => {
     console.error('Error in auth callback:', error);
     
     // Redirect to frontend with error information
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5174';
     res.redirect(`${frontendUrl}?error=auth_error&message=${encodeURIComponent(error.message || 'Unknown error')}`);
   }
 });

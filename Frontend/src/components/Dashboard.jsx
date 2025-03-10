@@ -7,7 +7,15 @@ function Dashboard({ user }) {
   const [fomoData, setFomoData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isManualMode, setIsManualMode] = useState(false);
   const navigate = useNavigate();
+
+  // Check if we're in manual testing mode
+  useEffect(() => {
+    if (user.authToken === 'manual-auth-token-for-testing') {
+      setIsManualMode(true);
+    }
+  }, [user]);
 
   // Fetch FOMOscore on component mount
   useEffect(() => {
@@ -21,6 +29,31 @@ function Dashboard({ user }) {
           authToken: user.authToken?.substring(0, 10) + '...',
           hasTokenData: !!user.tokenData
         });
+        
+        // If we're in manual testing mode, generate mock data
+        if (isManualMode) {
+          console.log('Using manual mode with mock data');
+          setTimeout(() => {
+            setFomoData({
+              score: 7.5,
+              did: user.did,
+              data: {
+                groups: 12,
+                messages: 257,
+                keywordMatches: {
+                  totalCount: 15,
+                  keywords: {
+                    'cluster': 5,
+                    'protocol': 8,
+                    'ai': 2
+                  }
+                }
+              }
+            });
+            setLoading(false);
+          }, 1500); // Add a slight delay to simulate API call
+          return;
+        }
         
         // We now rely on the auth token to get the DID if needed
         if (!user.authToken) {
@@ -58,13 +91,13 @@ function Dashboard({ user }) {
       }
     };
 
-    if (user && user.did && user.authToken) {
+    if (user && user.did) {
       fetchFOMOscore();
     } else {
       setError('Missing authentication information. Please log in again.');
       setLoading(false);
     }
-  }, [user]);
+  }, [user, isManualMode]);
 
   // Log out user
   const handleLogout = () => {
@@ -88,6 +121,9 @@ function Dashboard({ user }) {
         <div className="dashboard-card loading">
           <h2>Calculating your FOMOscore...</h2>
           <div className="spinner"></div>
+          {isManualMode && (
+            <p className="note">Developer Mode: Generating mock data</p>
+          )}
         </div>
       </div>
     );
@@ -131,12 +167,17 @@ function Dashboard({ user }) {
         
         <div className="user-info">
           <p className="did-info">Verida DID: <span className="did-value">{user.did}</span></p>
+          {isManualMode && (
+            <p className="dev-mode-indicator" style={{color: '#ff6b6b', marginTop: '8px', fontSize: '0.8rem'}}>
+              Developer Mode: Using mock data
+            </p>
+          )}
         </div>
         
         {fomoData && (
           <div className="score-container">
             {/* Add warning if no Telegram data found */}
-            {fomoData.data.groups === 0 && fomoData.data.messages === 0 && (
+            {fomoData.data.groups === 0 && fomoData.data.messages === 0 && !isManualMode && (
               <div className="no-data-warning">
                 <p>No Telegram data found in your Verida vault.</p>
                 <p>Please sync your Telegram with Verida first by installing the Verida Wallet app.</p>
@@ -168,7 +209,7 @@ function Dashboard({ user }) {
             <div className="engage-bonus">
               <h3 className="engage-title">Engage Bonus</h3>
               <p className="engage-description">
-                How much you gossip about ?
+                How much you gossip about trending topics
               </p>
               
               <div className="keyword-count">
@@ -199,7 +240,8 @@ function Dashboard({ user }) {
 Dashboard.propTypes = {
   user: PropTypes.shape({
     did: PropTypes.string.isRequired,
-    authToken: PropTypes.string.isRequired
+    authToken: PropTypes.string.isRequired,
+    tokenData: PropTypes.object
   }).isRequired
 };
 
