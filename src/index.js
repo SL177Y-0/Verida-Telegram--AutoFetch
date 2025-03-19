@@ -217,187 +217,6 @@ app.get('/api/telegram/messages', async (req, res) => {
   }
 });
 
-// Search Telegram messages by keyword
-app.get('/api/telegram/search', async (req, res) => {
-  try {
-    const { userId, keyword } = req.query;
-    const authToken = userTokens[userId];
-    
-    if (!authToken) {
-      return res.status(401).json({ success: false, error: 'Not authenticated' });
-    }
-    
-    if (!keyword) {
-      return res.status(400).json({ success: false, error: 'Keyword is required' });
-    }
-    
-    // Use the correct schema URL and encode it in base64
-    const schemaUrl = 'https://common.schemas.verida.io/social/chat/message/v0.1.0/schema.json';
-    const schemaUrlEncoded = btoa(schemaUrl);
-    
-    console.log('Making request to:', `${process.env.API_ENDPOINT}/ds/query/${schemaUrlEncoded}`);
-    
-    // First try direct query with the messageText field
-    try {
-      const response = await axios({
-        method: 'POST',
-        url: `${process.env.API_ENDPOINT}/ds/query/${schemaUrlEncoded}`,
-        data: {
-          query: {
-            sourceApplication: "https://telegram.com",
-            messageText: {
-              $regex: keyword,
-              $options: "i" // Case insensitive
-            }
-          },
-          options: {
-            sort: [{ _id: "desc" }],
-            limit: 50
-          }
-        },
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        }
-      });
-      
-      // Log the response for debugging
-      console.log('API Search Response (direct):', JSON.stringify(response.data, null, 2));
-      
-      // Check if response.data exists and has the expected structure
-      const messages = response.data && response.data.items ? response.data.items : [];
-      
-      if (messages.length > 0) {
-        console.log(`Found ${messages.length} messages matching "${keyword}" using direct query`);
-        
-        return res.json({ 
-          success: true,
-          keyword,
-          count: messages.length, 
-          messages: messages,
-          searchMethod: 'direct'
-        });
-      }
-    } catch (error) {
-      console.log('Direct search failed, falling back to manual search:', error.message);
-      // Continue to fallback approach
-    }
-    
-    // Fallback: Get all messages and filter them manually
-    console.log('Falling back to manual search for keyword:', keyword);
-    
-    const response = await axios({
-      method: 'POST',
-      url: `${process.env.API_ENDPOINT}/ds/query/${schemaUrlEncoded}`,
-      data: {
-        query: {
-          sourceApplication: "https://telegram.com"
-        },
-        options: {
-          sort: [{ _id: "desc" }],
-          limit: 200 // Increase limit for better search results
-        }
-      },
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-      }
-    });
-    
-    // Log the response for debugging
-    console.log('API Search Response (fallback):', JSON.stringify(response.data, null, 2));
-    
-    // Check if response.data exists and has the expected structure
-    const allMessages = response.data && response.data.items ? response.data.items : [];
-    
-    // Filter messages manually
-    const lowercaseKeyword = keyword.toLowerCase();
-    const messages = allMessages.filter(msg => {
-      const messageText = msg.messageText || '';
-      return messageText.toLowerCase().includes(lowercaseKeyword);
-    });
-    
-    console.log(`Found ${messages.length} messages matching "${keyword}" using manual filtering`);
-    
-    res.json({ 
-      success: true,
-      keyword,
-      count: messages.length, 
-      messages: messages,
-      searchMethod: 'manual'
-    });
-  } catch (error) {
-    console.error('Error searching Telegram messages:', error);
-    
-    // Log more details if it's an Axios error
-    if (error.response) {
-      console.error('Response data:', error.response.data);
-      console.error('Response status:', error.response.status);
-      console.error('Response headers:', error.response.headers);
-    }
-    
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// Function to get count from a datastore
-async function getDatastoreCount(authToken, schemaUrl) {
-  try {
-    const schemaUrlEncoded = btoa(schemaUrl);
-    console.log(`Making count request to: ${process.env.API_ENDPOINT}/ds/count/${schemaUrlEncoded}`);
-    
-    const response = await axios({
-      method: 'POST',
-      url: `${process.env.API_ENDPOINT}/ds/count/${schemaUrlEncoded}`,
-      data: {
-        query: {
-          sourceApplication: "https://telegram.com"
-        }
-      },
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
-      }
-    });
-    
-    console.log('Count API Response:', JSON.stringify(response.data, null, 2));
-    return response.data && response.data.count ? response.data.count : 0;
-  } catch (error) {
-    console.error(`Error getting count for ${schemaUrl}:`, error);
-    return 0;
-  }
-}
-
-// Get Telegram stats using the count endpoint
-app.get('/api/telegram/count', async (req, res) => {
-  try {
-    const { userId } = req.query;
-    const authToken = userTokens[userId];
-    
-    if (!authToken) {
-      return res.status(401).json({ success: false, error: 'Not authenticated' });
-    }
-    
-    // Get counts for groups and messages using the dedicated count endpoint
-    const groupSchemaUrl = 'https://common.schemas.verida.io/social/chat/group/v0.1.0/schema.json';
-    const messageSchemaUrl = 'https://common.schemas.verida.io/social/chat/message/v0.1.0/schema.json';
-    
-    const groupCount = await getDatastoreCount(authToken, groupSchemaUrl);
-    const messageCount = await getDatastoreCount(authToken, messageSchemaUrl);
-    
-    res.json({
-      success: true,
-      counts: {
-        groups: groupCount,
-        messages: messageCount
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching Telegram counts:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
 // Get keyword stats for messages (counts for specified keywords)
 app.get('/api/telegram/stats', async (req, res) => {
   try {
@@ -485,8 +304,66 @@ app.get('/api/telegram/stats', async (req, res) => {
   }
 });
 
+// Function to get count from a datastore
+async function getDatastoreCount(authToken, schemaUrl) {
+  try {
+    const schemaUrlEncoded = btoa(schemaUrl);
+    console.log(`Making count request to: ${process.env.API_ENDPOINT}/ds/count/${schemaUrlEncoded}`);
+    
+    const response = await axios({
+      method: 'POST',
+      url: `${process.env.API_ENDPOINT}/ds/count/${schemaUrlEncoded}`,
+      data: {
+        query: {
+          sourceApplication: "https://telegram.com"
+        }
+      },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      }
+    });
+    
+    console.log('Count API Response:', JSON.stringify(response.data, null, 2));
+    return response.data && response.data.count ? response.data.count : 0;
+  } catch (error) {
+    console.error(`Error getting count for ${schemaUrl}:`, error);
+    return 0;
+  }
+}
+
+// Get Telegram stats using the count endpoint
+app.get('/api/telegram/count', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    const authToken = userTokens[userId];
+    
+    if (!authToken) {
+      return res.status(401).json({ success: false, error: 'Not authenticated' });
+    }
+    
+    // Get counts for groups and messages using the dedicated count endpoint
+    const groupSchemaUrl = 'https://common.schemas.verida.io/social/chat/group/v0.1.0/schema.json';
+    const messageSchemaUrl = 'https://common.schemas.verida.io/social/chat/message/v0.1.0/schema.json';
+    
+    const groupCount = await getDatastoreCount(authToken, groupSchemaUrl);
+    const messageCount = await getDatastoreCount(authToken, messageSchemaUrl);
+    
+    res.json({
+      success: true,
+      counts: {
+        groups: groupCount,
+        messages: messageCount
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching Telegram counts:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 // Start server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Using API endpoint: ${process.env.API_ENDPOINT}`);
