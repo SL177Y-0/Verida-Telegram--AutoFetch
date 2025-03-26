@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verida Telegram Explorer</title>
+  <title>Verida/Telegram</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
   <header>
-    <h1>Verida Telegram Explorer</h1>
+    <h1>Verida/Telegram</h1>
     <div class="status-bar">
       <div id="connectionStatus" class="disconnected">Not connected</div>
       <div id="refreshStatus">Auto-refresh not active</div>
@@ -16,7 +19,7 @@
   </header>
   
   <div class="connect-container">
-    <button id="connectBtn" class="connect-button">Connect to Verida</button>
+    <button id="connectBtn" class="connect-button">Connect</button>
   </div>
   
   <main>
@@ -35,22 +38,28 @@
     </section>
     
     <section id="groupsSection" class="data-section">
-      <h2>Telegram Groups (<span id="groupsCount">0</span>)</h2>
+      <h2>TG Groups (<span id="groupsCount">0</span>)</h2>
       <div id="groupsContainer" class="groups-container">
         <div class="loading">Loading groups...</div>
       </div>
     </section>
     
     <section id="messagesSection" class="data-section">
-      <h2>Recent Messages (<span id="messagesCount">0</span>)</h2>
+      <h2>TG Messages (<span id="messagesCount">0</span>)</h2>
       <div id="messagesContainer" class="messages-container">
         <div class="loading">Loading messages...</div>
       </div>
     </section>
   </main>
   
+  <div class="dark-mode-toggle" id="darkModeToggle">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+  </div>
+  
   <footer>
-    <p>&copy; 2023 Verida Telegram Explorer</p>
+    <p>&copy; 2025 Verida/Telegram</p>
   </footer>
   
   <script src="js/app.js"></script>
