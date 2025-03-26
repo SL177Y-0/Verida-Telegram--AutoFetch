@@ -4,7 +4,7 @@ A simple Node.js application for integrating with Verida to access and analyze T
 
 ## Preview
 
-   ![Video]("./public/Demo.mp4")
+   ![Video]("/public/Demo.mp4")
 
    
 ## Features
