@@ -4,7 +4,7 @@ A simple Node.js application for integrating with Verida to access and analyze T
 
 ## Preview
 
-   ![Video]("./Demo.mp4")
+   ![Video]("https://github.com/SL177Y-0/Verida-Telegram--AutoFetch/blob/main/public/Demo.mp4")
 
    
 ## Features
