@@ -4,7 +4,7 @@ A simple Node.js application for integrating with Verida to access and analyze T
 
 ## Preview
 
-   ![Video](https://imagekit.io/tools/asset-public-link?detail=%7B%22name%22%3A%22Demo.mp4%22%2C%22type%22%3A%22video%2Fmp4%22%2C%22signedurl_expire%22%3A%222028-03-25T18%3A25%3A33.957Z%22%2C%22signedUrl%22%3A%22https%3A%2F%2Fmedia-hosting.imagekit.io%2F6dd441639e374d31%2FDemo.mp4%3FExpires%3D1837621534%26Key-Pair-Id%3DK2ZIVPTIP2VGHC%26Signature%3DSPAnkf7F6Y~WJYPylOlD-Ci4P3bjT7eqQTO2HKIZuG~ZOYS~ioOlR6MtsNn7QC8BfuM8Lr9U5Pxa34akrbQe2FKY-ijzkzOcvKCclqiNn71vJQZWt1dLtNr85YMnLZYzCkXtyAqMo-N~9mfElrZWZHy5QBmYOhgG0vEpN2Rm4HQB-M1zFNFLiO-R1StTx1fpn8r8QAHtoIwoQ8zVb4LPdNb7zqm2wIcSuJKEc5VXOrDTBIdk1t9UJr4YlKF9xJGxRukkG3amKgS7ikTJ0Yo3BKXaLV86lzbGiaiOrR2nmHe~IGi1biLJsPerXiyL3rfkcnXhkvDVJFlA9HsI4uKzOw__%22%7D)
+   ![Video](![Demo.mp4](<https://media-hosting.imagekit.io/6dd441639e374d31/Demo.mp4?Expires=1837621534&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=SPAnkf7F6Y~WJYPylOlD-Ci4P3bjT7eqQTO2HKIZuG~ZOYS~ioOlR6MtsNn7QC8BfuM8Lr9U5Pxa34akrbQe2FKY-ijzkzOcvKCclqiNn71vJQZWt1dLtNr85YMnLZYzCkXtyAqMo-N~9mfElrZWZHy5QBmYOhgG0vEpN2Rm4HQB-M1zFNFLiO-R1StTx1fpn8r8QAHtoIwoQ8zVb4LPdNb7zqm2wIcSuJKEc5VXOrDTBIdk1t9UJr4YlKF9xJGxRukkG3amKgS7ikTJ0Yo3BKXaLV86lzbGiaiOrR2nmHe~IGi1biLJsPerXiyL3rfkcnXhkvDVJFlA9HsI4uKzOw__>))
 
    
 ## Features
