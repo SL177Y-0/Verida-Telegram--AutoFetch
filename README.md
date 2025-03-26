@@ -2,9 +2,11 @@
 
 A simple Node.js application for integrating with Verida to access and analyze Telegram data.
 
-## PREVIEW
+## Preview
 
+   ![Video]("./public/Demo.mp4")
 
+   
 ## Features
 
 - Connect to Verida account with OAuth flow
