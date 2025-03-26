@@ -4,7 +4,7 @@ A simple Node.js application for integrating with Verida to access and analyze T
 
 ## Preview
 
-   ![Video](![Demo.mp4](<https://media-hosting.imagekit.io/6dd441639e374d31/Demo.mp4?Expires=1837621534&Key-Pair-Id=K2ZIVPTIP2VGHC&Signature=SPAnkf7F6Y~WJYPylOlD-Ci4P3bjT7eqQTO2HKIZuG~ZOYS~ioOlR6MtsNn7QC8BfuM8Lr9U5Pxa34akrbQe2FKY-ijzkzOcvKCclqiNn71vJQZWt1dLtNr85YMnLZYzCkXtyAqMo-N~9mfElrZWZHy5QBmYOhgG0vEpN2Rm4HQB-M1zFNFLiO-R1StTx1fpn8r8QAHtoIwoQ8zVb4LPdNb7zqm2wIcSuJKEc5VXOrDTBIdk1t9UJr4YlKF9xJGxRukkG3amKgS7ikTJ0Yo3BKXaLV86lzbGiaiOrR2nmHe~IGi1biLJsPerXiyL3rfkcnXhkvDVJFlA9HsI4uKzOw__>))
+   ![Video](https://github.com/user-attachments/assets/9aa2b65a-d15b-4e7c-81f1-c5214ad888ef)
 
    
 ## Features
