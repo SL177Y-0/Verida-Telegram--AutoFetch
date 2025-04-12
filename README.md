@@ -3,8 +3,12 @@
 A simple Node.js application for integrating with Verida to access and analyze Telegram data.
 
 ## Preview
-Demo
-https://github.com/user-attachments/assets/9aa2b65a-d15b-4e7c-81f1-c5214ad888ef
+
+
+
+https://github.com/user-attachments/assets/b589542d-b320-44bb-8165-3c0e0dd16edf
+
+
 
    
 ## Features
